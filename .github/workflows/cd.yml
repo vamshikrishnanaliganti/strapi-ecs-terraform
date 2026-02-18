@@ -12,11 +12,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout repository
-      - name: Checkout Repo
+      # Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Configure AWS credentials
+      # Configure AWS credentials
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -24,35 +24,32 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      # 3️⃣ Setup Terraform
+      # Setup Terraform
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.6.0
 
-      # 4️⃣ Terraform Init
+      # Terraform Init
       - name: Terraform Init
         run: terraform init
-        working-directory: terraform
 
-      # 5️⃣ Terraform Validate
+      # Terraform Validate
       - name: Terraform Validate
         run: terraform validate
-        working-directory: terraform
 
-      # 6️⃣ Terraform Plan
+      # Terraform Plan
       - name: Terraform Plan
         env:
           TF_VAR_region: ${{ secrets.AWS_REGION }}
-          TF_VAR_image_tag: ${{ github.sha }}          # latest Docker image tag from CI
+          TF_VAR_image_tag: ${{ github.sha }}
           TF_VAR_ecr_repo_url: ${{ secrets.ECR_REPO_URL }}
           TF_VAR_db_name: ${{ secrets.DB_NAME }}
           TF_VAR_db_username: ${{ secrets.DB_USERNAME }}
           TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
         run: terraform plan -out=tfplan
-        working-directory: terraform
 
-      # 7️⃣ Terraform Apply
+      # Terraform Apply
       - name: Terraform Apply
         env:
           TF_VAR_region: ${{ secrets.AWS_REGION }}
@@ -62,4 +59,3 @@ jobs:
           TF_VAR_db_username: ${{ secrets.DB_USERNAME }}
           TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
         run: terraform apply -auto-approve tfplan
-        working-directory: terraform

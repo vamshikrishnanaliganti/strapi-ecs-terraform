@@ -11,11 +11,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout code
+      # Checkout repository
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Configure AWS credentials
+      # Configure AWS credentials
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -23,11 +23,11 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      # 3️⃣ Login to Amazon ECR
+      # Login to ECR
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      # 4️⃣ Build Docker image
+      # Build Docker image
       - name: Build Docker Image
         env:
           IMAGE_TAG: ${{ github.sha }}
@@ -36,14 +36,14 @@ jobs:
           docker build -t $ECR_REPO:$IMAGE_TAG .
           docker tag $ECR_REPO:$IMAGE_TAG $ECR_REPO:$IMAGE_TAG
 
-      # 5️⃣ Push Docker image
+      # Push Docker image
       - name: Push Docker Image
         env:
           IMAGE_TAG: ${{ github.sha }}
           ECR_REPO: ${{ secrets.ECR_REPO_URL }}
         run: docker push $ECR_REPO:$IMAGE_TAG
 
-      # 6️⃣ Cleanup old Docker images in ECR (keep latest 5)
+      # Cleanup old images in ECR (keep latest 5)
       - name: Cleanup Old ECR Images
         env:
           ECR_REPO: ${{ secrets.ECR_REPO_URL }}
