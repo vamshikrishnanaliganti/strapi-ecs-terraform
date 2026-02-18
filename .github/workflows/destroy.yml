@@ -35,7 +35,8 @@ jobs:
         id: build-image
         run: |
           IMAGE_TAG=${{ github.sha }}
-          docker build -t $ECR_REPOSITORY:$IMAGE_TAG ./app
+          docker build -t $ECR_REPOSITORY:$IMAGE_TAG .
+
           docker tag $ECR_REPOSITORY:$IMAGE_TAG ${{ steps.login-ecr.outputs.registry }}/$ECR_REPOSITORY:$IMAGE_TAG
           docker push ${{ steps.login-ecr.outputs.registry }}/$ECR_REPOSITORY:$IMAGE_TAG
           echo "image=${{ steps.login-ecr.outputs.registry }}/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
