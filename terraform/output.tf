@@ -1,10 +1,7 @@
-output "ecs_cluster_name" {
-  value = aws_ecs_task_definition.strapi.family
+output "ecr_repository_url" {
+  value = aws_ecr_repository.strapi.repository_url
 }
 
 output "rds_endpoint" {
   value = aws_db_instance.postgres.address
-}
-output "ecs_image" {
-  value = "${var.ecr_repo_url}:${var.image_tag}"
 }

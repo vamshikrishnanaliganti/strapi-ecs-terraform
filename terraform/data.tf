@@ -8,3 +8,7 @@ data "aws_subnets" "default" {
     values = [data.aws_vpc.default.id]
   }
 }
+
+data "aws_iam_role" "ecs_execution_role" {
+  name = "ecsTaskExecutionRole"
+}
