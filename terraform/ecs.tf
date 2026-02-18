@@ -1,7 +1,3 @@
-resource "aws_ecr_repository" "strapi" {
-  name = "strapi-app-repo"
-}
-
 resource "aws_ecs_cluster" "main" {
   name = "strapi-cluster"
 }
@@ -13,18 +9,16 @@ resource "aws_ecs_task_definition" "strapi" {
   cpu                      = "256"
   memory                   = "512"
 
-  execution_role_arn = data.aws_iam_role.ecs_execution_role.arn
+  execution_role_arn = aws_iam_role.ecs_execution_role.arn
 
   container_definitions = jsonencode([{
     name      = "strapi"
     image     = "${aws_ecr_repository.strapi.repository_url}:${var.image_tag}"
     essential = true
-
     portMappings = [{
       containerPort = 1337
       hostPort      = 1337
     }]
-
     environment = [
       {
         name  = "DATABASE_CLIENT"
@@ -44,7 +38,7 @@ resource "aws_ecs_task_definition" "strapi" {
       },
       {
         name  = "DATABASE_USERNAME"
-        value = "strapiadmin"
+        value = var.db_username
       },
       {
         name  = "DATABASE_PASSWORD"
