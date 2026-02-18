@@ -1,31 +1,53 @@
-# name: CI - Build & Push to ECR
+name: CI - Build & Push Strapi Docker Image
 
-# on:
-#   push:
-#     branches: ["main"]
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
 
-# env:
-#   AWS_REGION: ap-south-1
-#   ECR_REPOSITORY: strapi-app-repo
+jobs:
+  build:
+    runs-on: ubuntu-latest
 
-# jobs:
-#   build:
-#     runs-on: ubuntu-latest
+    steps:
+      # 1️⃣ Checkout code
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-#     steps:
-#       - uses: actions/checkout@v4
+      # 2️⃣ Configure AWS credentials
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-#       - uses: aws-actions/configure-aws-credentials@v4
-#         with:
-#           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-#           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-#           aws-region: ${{ secrets.AWS_REGION }}
+      # 3️⃣ Login to Amazon ECR
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
 
-#       - id: login-ecr
-#         uses: aws-actions/amazon-ecr-login@v2
+      # 4️⃣ Build Docker image
+      - name: Build Docker Image
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+          ECR_REPO: ${{ secrets.ECR_REPO_URL }}
+        run: |
+          docker build -t $ECR_REPO:$IMAGE_TAG .
+          docker tag $ECR_REPO:$IMAGE_TAG $ECR_REPO:$IMAGE_TAG
 
-#       - name: Build & Push
-#         run: |
-#           IMAGE_URI=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
-#           docker build -t $IMAGE_URI .
-#           docker push $IMAGE_URI
+      # 5️⃣ Push Docker image
+      - name: Push Docker Image
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+          ECR_REPO: ${{ secrets.ECR_REPO_URL }}
+        run: docker push $ECR_REPO:$IMAGE_TAG
+
+      # 6️⃣ Cleanup old Docker images in ECR (keep latest 5)
+      - name: Cleanup Old ECR Images
+        env:
+          ECR_REPO: ${{ secrets.ECR_REPO_URL }}
+        run: |
+          aws ecr list-images --repository-name $(basename $ECR_REPO) --region ${{ secrets.AWS_REGION }} \
+            --query 'imageIds[*]' | jq -r '.[].imageDigest' | tail -n +6 | xargs -r -I {} \
+            aws ecr batch-delete-image --repository-name $(basename $ECR_REPO) --image-ids imageDigest={}
